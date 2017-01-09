@@ -8,11 +8,18 @@ from sklearn.decomposition import KernelPCA as sklearnKPCA
 import scipy.io as sio
 import os
 
-os.chdir('/home/niharikashimona/MLSP-Project/patient_data/')
+os.chdir('/home/niharikashimona/Downloads/')
 
-data = sio.loadmat('data_1.mat')
-data_train = data['data_train']
-data_test = data['data_test']
+dataset = sio.loadmat('dataset_ADOS_Comm.mat')
+data = dataset['data']
+y = dataset['y']
+[r,c] = data.shape
+split = np.ceil(r*0.8)
+data_train = data[0:split,:]
+y_train = y[0:split]
+data_test = data[split+1:,:]
+y_test = y[split+1:]
+
 
 sklearn_pca = sklearnPCA(n_components=10)
 sklearn_transf = sklearn_pca.fit_transform(data_train)
