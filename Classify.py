@@ -11,57 +11,54 @@ import scipy.io as sio
 import os
 from sklearn.model_selection import cross_val_score
 from sklearn.svm import SVC
+from sklearn.pipeline import Pipeline
 
 os.chdir('/home/niharikashimona/Downloads/Datasets/')
 
 dataset = sio.loadmat('Aut_classify.mat')
 x = dataset['data']
 y = dataset['y']
+y = np.ravel(y)
 
 # print x.shape, y.shape
-kf_total = cross_validation.KFold(len(x), n_folds=50, shuffle=False, random_state=782828)
-# kf_total = StratifiedKFold(n_splits =10)
-# kf_total.get_n_splits(x, y)
+# kf_total = cross_validation.KFold(len(x), n_folds=50, shuffle=False, random_state=782828)
+kf_total = StratifiedKFold(n_splits =10,shuffle=True)
+kf_total.get_n_splits(x, y)
 
-# for train, test in kf_total:
-#  	print x[train], '\n', np.asarray(y[train]), '\n\n'
+for train, test in kf_total.split(x,y):
+ 	print test 
+ 	print x[train].shape, '\n', y[train].shape
 
-sklearn_pca = sklearnPCA(n_components=167)
-sklearn_kpca = sklearnKPCA(n_components=10	,kernel="rbf")
-clf = SVC(kernel ='rbf',C=0.07)
-clf2 = SVC(kernel ='rbf',C=0.07)
-clf3 = SVC(kernel ='rbf',C=0.07)
+sklearn_pca = sklearnPCA()
+sklearn_kpca = sklearnKPCA(kernel="rbf")
 
-# for train, test in kf_total.split(x,y):
-# 	sklearn_transf = sklearn_pca.fit_transform(x[train])
-# 	# print sklearn_pca.explained_variance_ratio_
-# 	# print sklearn_transf.shape
-# 	red_data_test = sklearn_pca.transform(x[test])
-# 	# print red_data_test.shape
-# 	clf.fit(sklearn_pca.fit_transform(x[train]),np.asarray(y[train],dtype = np.float32))
-# 	print " accuracy on reduced dataset using PCA \n"
-# 	print clf.score(sklearn_pca.transform(x[test]),np.asarray(y[test],dtype = np.float32))
-# 	clf2.fit(x[train],np.asarray(y[train],dtype = np.float32))
-# 	print " Baseline Accuracy\n"
-# 	print clf2.score(x[test],np.asarray(y[test],dtype = np.float32))
-#     clf3.fit(sklearn_kpca.fit_transform(x[train]),np.asarray(y[train],dtype = np.float32))
-#     print " accuracy on reduced dataset using KPCA \n"
-#     print clf3.score(sklearn_kpca.transform(x[test]),np.asarray(y[test],dtype = np.float32))
-# #     c_range = np.logspace(0, 4, 10)
+clf = SVC(kernel ='rbf')
+clf2 = SVC(kernel ='linear')
+clf3 = SVC(kernel ='rbf')
+
+pca_svm = Pipeline([('pca',sklearn_pca), ('svc', clf)])
+kpca_svm = Pipeline([('kpca',sklearn_kpca), ('svc', clf3)])
+
+# c_range = np.logspace(0, 4, 10)
+n_comp = np.linspace(5, 30, num=7)
      
  
-# lrgs = grid_search.GridSearchCV(estimator=clf, param_grid=dict(C=c_range), n_jobs=1)
-print " accuracy on reduced dataset using PCA \n"
-print [clf.fit(sklearn_pca.fit_transform(x[train_indices]),np.asarray(y[train_indices],dtype = np.float32)) \
-      .score(sklearn_pca.transform(x[test_indices]),np.asarray(y[test_indices],dtype = np.float32)) \
-	  for train_indices, test_indices in kf_total]
+# print " accuracy on reduced dataset using PCA \n"
+# print [clf.fit(sklearn_pca.fit_transform(x[train_indices]),np.asarray(y[train_indices],dtype = np.float32)) \
+#       .score(sklearn_pca.transform(x[test_indices]),np.asarray(y[test_indices],dtype = np.float32)) \
+# 	  for train_indices, test_indices in kf_total.split(x,y)]
 
 print " Baseline \n"
-print [clf2.fit(x[train_indices],np.asarray(y[train_indices],dtype = np.float32)) \
+print np.mean([clf2.fit(x[train_indices],np.asarray(y[train_indices],dtype = np.float32)) \
       .score(x[test_indices],np.asarray(y[test_indices],dtype = np.float32)) \
-	  for train_indices, test_indices in kf_total]
+	  for train_indices, test_indices in kf_total.split(x,y)])
 
-print " accuracy on reduced dataset using kPCA \n"    
-print [clf.fit(sklearn_kpca.fit_transform(x[train_indices]),np.asarray(y[train_indices],dtype = np.float32)) \
-      .score(sklearn_kpca.transform(x[test_indices]),np.asarray(y[test_indices],dtype = np.float32)) \
-	  for train_indices, test_indices in kf_total]
+# print " accuracy on reduced dataset using kPCA \n"    
+# print [clf.fit(sklearn_kpca.fit_transform(x[train_indices]),np.asarray(y[train_indices],dtype = np.float32)) \
+#       .score(sklearn_kpca.transform(x[test_indices]),np.asarray(y[test_indices],dtype = np.float32)) \
+# 	  for train_indices, test_indices in kf_total.split(x,y)]
+
+lrgs = grid_search.GridSearchCV(estimator=pca_svm, param_grid=dict(pca__n_components = n_comp), n_jobs=1)
+print [lrgs.fit(x[train],y[train]).score(x[test],y[test]) for train, test in kf_total.split(x,y)]
+print lrgs.best_score_
+print lrgs.best_estimator_
