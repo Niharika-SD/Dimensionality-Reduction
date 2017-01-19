@@ -30,7 +30,7 @@ for train, test in kf_total.split(x,y):
  	print x[train].shape, '\n', y[train].shape
 
 sklearn_pca = sklearnPCA()
-sklearn_kpca = sklearnKPCA(kernel="rbf")
+sklearn_kpca = sklearnKPCA(kernel="poly")
 
 clf = SVC(kernel ='rbf')
 clf2 = SVC(kernel ='linear')
@@ -39,8 +39,8 @@ clf3 = SVC(kernel ='rbf')
 pca_svm = Pipeline([('pca',sklearn_pca), ('svc', clf)])
 kpca_svm = Pipeline([('kpca',sklearn_kpca), ('svc', clf3)])
 
-# c_range = np.logspace(0, 4, 10)
-n_comp = np.linspace(5, 30, num=7)
+c_range = np.logspace(-2, 2, 4)
+n_comp = np.linspace(5, 30, num=7,dtype = 'int32')
      
  
 # print " accuracy on reduced dataset using PCA \n"
@@ -53,12 +53,14 @@ print np.mean([clf2.fit(x[train_indices],np.asarray(y[train_indices],dtype = np.
       .score(x[test_indices],np.asarray(y[test_indices],dtype = np.float32)) \
 	  for train_indices, test_indices in kf_total.split(x,y)])
 
-# print " accuracy on reduced dataset using kPCA \n"    
-# print [clf.fit(sklearn_kpca.fit_transform(x[train_indices]),np.asarray(y[train_indices],dtype = np.float32)) \
-#       .score(sklearn_kpca.transform(x[test_indices]),np.asarray(y[test_indices],dtype = np.float32)) \
-# 	  for train_indices, test_indices in kf_total.split(x,y)]
-
+print " accuracy on reduced dataset using PCA \n"
 lrgs = grid_search.GridSearchCV(estimator=pca_svm, param_grid=dict(pca__n_components = n_comp), n_jobs=1)
+print [lrgs.fit(x[train],y[train]).score(x[test],y[test]) for train, test in kf_total.split(x,y)]
+print lrgs.best_score_
+print lrgs.best_estimator_
+
+print " accuracy on reduced dataset using kPCA \n"
+lrgs = grid_search.GridSearchCV(estimator=kpca_svm, param_grid=dict(kpca__n_components = n_comp,kpca__gamma = c_range), n_jobs=1)
 print [lrgs.fit(x[train],y[train]).score(x[test],y[test]) for train, test in kf_total.split(x,y)]
 print lrgs.best_score_
 print lrgs.best_estimator_
