@@ -24,12 +24,12 @@ print y.shape
 
 kf_total = cross_validation.KFold(len(x), n_folds=10, shuffle=True, random_state=782828)
 sklearn_pca = sklearnPCA(n_components=5)
-sklearn_kpca = sklearnKPCA(n_components=5	,kernel="rbf",fit_inverse_transform = 'True')
-svr_rbf = SVR(kernel='poly',degree =3)
+sklearn_kpca = sklearnKPCA(kernel="poly",fit_inverse_transform = 'True')
+svr_rbf = SVR(kernel='rbf')
 lr = linear_model.LinearRegression()
 pca_lr = Pipeline([('pca',sklearn_pca), ('lr', lr)])
 kpca_lr = Pipeline([('kpca',sklearn_kpca), ('lr', lr)])
-pca_svr = Pipeline([('pca',sklearn_pca), ('svr', svr_rbf)])
+kpca_svr = Pipeline([('kpca',sklearn_kpca), ('svr', svr_rbf)])
 
 
 print " accuracy on reduced dataset using PCA \n"
@@ -91,15 +91,15 @@ for train, test in kf_total:
     # print 'MAE : ', mean_absolute_error(y[test], model.predict(x[test]))
     # print 'r2 : ', r2_score(y[test], model.predict(x[test]))
     # print 'explained variance score', explained_variance_score(y[test], model.predict(x[test]), multioutput='variance_weighted')
-    kPCA_MAE.append(mean_absolute_error(y[train], model.predict(x[train])))
-    kPCA_r2.append(r2_score(y[train], model.predict(x[train]), multioutput='variance_weighted'))
-    kPCA_exp.append(explained_variance_score(y[train], model.predict(x[train]), multioutput='variance_weighted'))
-    fig, ax = plt.subplots()
-    ax.scatter(y[train],model.predict(x[train]),y[train])
-    ax.plot([y[train].min(), y[train].max()], [y[train].min(), y[train].max()], 'k--', lw=4)
-    ax.set_xlabel('Predicted')
-    ax.set_ylabel('Measured')
-    plt.show() 
+    kPCA_MAE.append(mean_absolute_error(y[test], model.predict(x[test])))
+    kPCA_r2.append(r2_score(y[test], model.predict(x[test]), multioutput='variance_weighted'))
+    kPCA_exp.append(explained_variance_score(y[test], model.predict(x[test]), multioutput='variance_weighted'))
+    # fig, ax = plt.subplots()
+    # ax.scatter(y[test],model.predict(x[test]),y[test])
+    # ax.plot([y[test].min(), y[test].max()], [y[test].min(), y[test].max()], 'k--', lw=4)
+    # ax.set_xlabel('Predicted')
+    # ax.set_ylabel('Measured')
+    # plt.show() 
 
 print(np.mean(kPCA_MAE),np.mean(kPCA_r2),np.mean(kPCA_exp))
 
@@ -110,7 +110,7 @@ sPCA_exp =[]
 print " accuracy on reduced dataset using PCA after svr \n"
 for train, test in kf_total:
      
-    model = pca_svr.fit(x[train],y[train])
+    model = kpca_svr.fit(x[train],y[train])
     # print y[test], model.predict(x[test])
     # print 'MAE : ', mean_absolute_error(y[test], model.predict(x[test]))
     sPCA_MAE.append(mean_absolute_error(y[test], model.predict(x[test])))
@@ -129,9 +129,10 @@ for train, test in kf_total:
 print(np.mean(sPCA_MAE),np.mean(sPCA_r2),np.mean(sPCA_exp))
 
 c_range = np.logspace(-2, 2, 5)
-gamma_range = np.linspace(2, 5, 4)
+n_comp_range = np.linspace(5, 30, 6)
 
-lrgs = grid_search.GridSearchCV(estimator=pca_svr, param_grid=dict(svr__C = c_range), scoring ='neg_mean_absolute_error', n_jobs=1)
-print [explained_variance_score(lrgs.fit(x[train],y[train]).predict(x[test]),y[test],multioutput='variance_weighted') for train, test in kf_total]
+lrgs = grid_search.GridSearchCV(estimator=kpca_svr, param_grid=dict(kpca__n_components= n_comp_range,svr__C = c_range), scoring ='neg_mean_absolute_error', n_jobs=1)
+print [explained_variance_score(y[test],lrgs.fit(x[train],y[train]).predict(x[test]),multioutput='variance_weighted') for train, test in kf_total]
+print [mean_absolute_error(lrgs.fit(x[train],y[train]).predict(x[test]),y[test],multioutput='variance_weighted') for train, test in kf_total]
 print lrgs.best_score_
 print lrgs.best_estimator_
