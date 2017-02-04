@@ -15,7 +15,7 @@ from sklearn.pipeline import Pipeline
 
 os.chdir('/home/niharikashimona/Downloads/Datasets/')
 
-dataset = sio.loadmat('Aut_classify.mat')
+dataset = sio.loadmat('Aut_classify1rz.mat')
 x = dataset['data']
 y = dataset['y']
 y = np.ravel(y)
@@ -32,7 +32,7 @@ for train, test in kf_total.split(x,y):
 sklearn_pca = sklearnPCA()
 sklearn_kpca = sklearnKPCA(kernel="poly")
 
-clf = SVC(kernel ='rbf')
+clf = SVC(kernel ='linear')
 clf2 = SVC(kernel ='linear')
 clf3 = SVC(kernel ='rbf')
 
