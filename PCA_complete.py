@@ -11,7 +11,7 @@ import scipy.io as sio
 import os
 from sklearn.model_selection import cross_val_score
 from sklearn.pipeline import Pipeline
-from sklearn.metrics import mean_squared_error,explained_variance_score,mean_absolute_error,r2_score
+from sklearn.metrics import mean_squared_error,explained_variance_score,mean_absolute_error,r2_score,make_scorer
 from sklearn.svm import SVR
 
 os.chdir('/home/niharikashimona/Downloads/Datasets/')
@@ -22,11 +22,11 @@ y = dataset['y']
 y = np.ravel(y)
 print y.shape
 
-kf_total = cross_validation.KFold(len(x), n_folds=5,shuffle=True, random_state=782828)
-sklearn_pca = sklearnPCA(n_components=10)
-sklearn_kpca = sklearnKPCA(n_components=5,kernel="rbf",fit_inverse_transform = 'True')
-svr_rbf = SVR(kernel='rbf',C =0.1)
-lr = linear_model.Lasso(alpha = 0.001)
+kf_total = cross_validation.KFold(len(x), n_folds=10,shuffle=True, random_state=782828)
+sklearn_pca = sklearnPCA(n_components=30)
+sklearn_kpca = sklearnKPCA(n_components=25,kernel="rbf",fit_inverse_transform = 'True')
+svr_rbf = SVR(kernel='poly',degree =3)
+lr = linear_model.LinearRegression()
 
 pca_lr = Pipeline([('pca',sklearn_pca), ('lr', lr)])
 kpca_lr = Pipeline([('kpca',sklearn_kpca), ('lr', lr)])
@@ -58,29 +58,29 @@ for train, test in kf_total:
 
 print(np.mean(PCA_MAE),np.mean(PCA_r2),np.mean(PCA_exp))
 
-# print " Baseline \n"
+print " Baseline \n"
 
-# MAE =[]
-# r2 =[]
-# exp_v =[]
-# for train, test in kf_total:
+MAE =[]
+r2 =[]
+exp_v =[]
+for train, test in kf_total:
 
-#     model = lr.fit(x[train],y[train])
-#     # print y[test], model.predict(x[test])
-#     # print 'MAE : ', mean_absolute_error(y[test], model.predict(x[test]))
-#     # print 'r2 : ', r2_score(y[test], model.predict(x[test]))
-#     # print 'explained variance score', explained_variance_score(y[test], model.predict(x[test]), multioutput='variance_weighted')
-#     MAE.append(mean_absolute_error(y[test], model.predict(x[test])))
-#     r2.append(r2_score(y[test], model.predict(x[test]), multioutput='variance_weighted'))
-#     exp_v.append(explained_variance_score(y[test], model.predict(x[test]), multioutput='variance_weighted'))
-#     # fig, ax = plt.subplots()
-#     # ax.scatter(y[test],model.predict(x[test]),y[test])
-#     # ax.plot([y[test].min(), y[test].max()], [y[test].min(), y[test].max()], 'k--', lw=4)
-#     # ax.set_xlabel('Measured')
-#     # ax.set_ylabel('Predicted')
-#     # plt.show() 
+    model = lr.fit(x[train],y[train])
+    print y[test], model.predict(x[test])
+    print 'MAE : ', mean_absolute_error(y[test], model.predict(x[test]))
+    print 'r2 : ', r2_score(y[test], model.predict(x[test]))
+    print 'explained variance score', explained_variance_score(y[test], model.predict(x[test]), multioutput='variance_weighted')
+    MAE.append(mean_absolute_error(y[test], model.predict(x[test])))
+    r2.append(r2_score(y[test], model.predict(x[test]), multioutput='variance_weighted'))
+    exp_v.append(explained_variance_score(y[test], model.predict(x[test]), multioutput='variance_weighted'))
+    fig, ax = plt.subplots()
+    ax.scatter(y[test],model.predict(x[test]),y[test])
+    ax.plot([y[test].min(), y[test].max()], [y[test].min(), y[test].max()], 'k--', lw=4)
+    ax.set_xlabel('Measured')
+    ax.set_ylabel('Predicted')
+    plt.show() 
 
-# print(np.mean(MAE),np.mean(r2),np.mean(exp_v))
+print(np.mean(MAE),np.mean(r2),np.mean(exp_v))
 
 print " accuracy on reduced dataset using kPCA \n"
 kPCA_MAE =[]
@@ -88,7 +88,7 @@ kPCA_r2 =[]
 kPCA_exp =[]
 for train, test in kf_total:
      
-    model = pca_lr.fit(x[train],y[train])
+    model = kpca_svr.fit(x[train],y[train])
     # print y[test], model.predict(x[test])
     print 'MAE : ', mean_absolute_error(y[test], model.predict(x[test]))
     # print 'r2 : ', r2_score(y[test], model.predict(x[test]))
@@ -105,43 +105,3 @@ for train, test in kf_total:
     plt.show() 
 
 print(np.mean(kPCA_MAE),np.mean(kPCA_r2),np.mean(kPCA_exp))
-
-sPCA_MAE =[]
-sPCA_r2 =[]
-sPCA_exp =[]
-
-print " accuracy on reduced dataset using PCA after svr \n"
-for train, test in kf_total:
-     
-    model = pca_svr.fit(x[train],y[train])
-    # print y[test], model.predict(x[test])
-    # print 'MAE : ', mean_absolute_error(y[test], model.predict(x[test]))
-    sPCA_MAE.append(mean_absolute_error(y[test], model.predict(x[test])))
-    # print 'r2 : ', r2_score(y[test], model.predict(x[test]))
-    sPCA_r2.append(r2_score(y[test], model.predict(x[test]), multioutput='variance_weighted'))
-    # print 'explained variance score', explained_variance_score(y[test], model.predict(x[test]), multioutput='variance_weighted')
-    sPCA_exp.append(explained_variance_score(y[test], model.predict(x[test]), multioutput='variance_weighted'))
-    fig, ax = plt.subplots()
-    ax.scatter(y[test],model.predict(x[test]),y[test])
-    ax.plot([y[test].min(), y[test].max()], [y[test].min(), y[test].max()], 'k--', lw=4)
-    ax.set_xlabel('Predicted')
-    ax.set_ylabel('Measured')
-    plt.show() 
-
-
-print(np.mean(sPCA_MAE),np.mean(sPCA_r2),np.mean(sPCA_exp))
-
-c_range = np.logspace(-2, 2, 5)
-n_comp_range = np.linspace(5, 30, 6)
-
-lrgs = grid_search.GridSearchCV(estimator=kpca_svr, param_grid=dict(kpca__n_components= n_comp_range,svr__C = c_range), scoring ='neg_mean_absolute_error', n_jobs=1)
-print [explained_variance_score(y[test],lrgs.fit(x[train],y[train]).predict(x[test]),multioutput='variance_weighted') for train, test in kf_total]
-print [mean_absolute_error(lrgs.fit(x[train],y[train]).predict(x[test]),y[test],multioutput='variance_weighted') for train, test in kf_total]
-print lrgs.best_score_
-print lrgs.best_estimator_
-
-lrgs = grid_search.GridSearchCV(estimator=pca_svr, param_grid=dict(pca__n_components= n_comp_range,svr__C = c_range), scoring ='neg_mean_absolute_error', n_jobs=1)
-print [explained_variance_score(y[test],lrgs.fit(x[train],y[train]).predict(x[test]),multioutput='variance_weighted') for train, test in kf_total]
-print [mean_absolute_error(lrgs.fit(x[train],y[train]).predict(x[test]),y[test],multioutput='variance_weighted') for train, test in kf_total]
-print lrgs.best_score_
-print lrgs.best_estimator_

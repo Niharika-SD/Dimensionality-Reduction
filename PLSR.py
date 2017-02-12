@@ -13,14 +13,14 @@ from sklearn.metrics import mean_squared_error,explained_variance_score,mean_abs
 
 os.chdir('/home/niharikashimona/Downloads/Datasets/')
 
-dataset = sio.loadmat('dataset_ADOSTotalScore.mat')
+dataset = sio.loadmat('bytSrsPSocTotSrsRaw.mat')
 x= dataset['data']
 y = dataset['y']
 y = np.ravel(y)
 print y.shape
 kf_total = cross_validation.KFold(len(x), n_folds=10, shuffle=True, random_state=782828)
 lr = linear_model.LinearRegression()
-model = PLSRegression(n_components=30)
+model = PLSRegression(n_components=10)
 sklearn_pca = sklearnPCA(n_components=5)
 pca_lr = Pipeline([('pca',sklearn_pca), ('lr', lr)])
 
@@ -31,9 +31,9 @@ for train, test in kf_total:
 	print 'MAE : ', mean_absolute_error(y[test], model.predict(x[test]))
 	print 'explained variance score', explained_variance_score(y[test], model.predict(x[test]), multioutput='variance_weighted')
 	print(model.coef_)
-	# fig, ax = plt.subplots()
-	# ax.scatter(y[test],model.predict(x[test]),y[test])
-	# ax.plot([y[test].min(), y[test].max()], [y[test].min(), y[test].max()], 'k--', lw=4)
-	# ax.set_xlabel('Predicted')
-	# ax.set_ylabel('Measured')
-	# plt.show() 
+	fig, ax = plt.subplots()
+	ax.scatter(y[test],model.predict(x[test]),y[test])
+	ax.plot([y[test].min(), y[test].max()], [y[test].min(), y[test].max()], 'k--', lw=4)
+	ax.set_xlabel('Predicted')
+	ax.set_ylabel('Measured')
+	plt.show() 
