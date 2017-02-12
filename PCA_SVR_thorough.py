@@ -65,7 +65,7 @@ for train, test in kf_total:
     sPCA_r2_test.append(r2_score(y[test], model.predict(x[test]), multioutput='variance_weighted'))
     sPCA_exp_test.append(explained_variance_score(y[test], model.predict(x[test]), multioutput='variance_weighted'))
     print 'MAE : ', mean_squared_error(y[test], model.predict(x[test]))
-    print 'Explained Variance Score : ', explained_variance_score(y[test], model.predict(x[tr]))
+    print 'Explained Variance Score : ', explained_variance_score(y[test], model.predict(x[test]))
     print 'r2 score: ' , r2_score(y[test], model.predict(x[test]))
     fig, ax = plt.subplots()
     ax.scatter(y[test],model.predict(x[test]),y[test])
