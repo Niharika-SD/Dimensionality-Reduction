@@ -40,7 +40,7 @@ PCA_r2 =[]
 PCA_exp =[]
 
 for train, test in kf_total:
-     
+
     model = pca_svr.fit(x[train],y[train])
     # print y[test], model.predict(x[test])
     print 'MAE : ', mean_absolute_error(y[test], model.predict(x[test]))
@@ -54,7 +54,7 @@ for train, test in kf_total:
     ax.plot([y[test].min(), y[test].max()], [y[test].min(), y[test].max()], 'k--', lw=4)
     ax.set_xlabel('Measured')
     ax.set_ylabel('Predicted')
-    plt.show() 
+    plt.show()
 
 print(np.mean(PCA_MAE),np.mean(PCA_r2),np.mean(PCA_exp))
 
@@ -78,7 +78,7 @@ for train, test in kf_total:
     ax.plot([y[test].min(), y[test].max()], [y[test].min(), y[test].max()], 'k--', lw=4)
     ax.set_xlabel('Measured')
     ax.set_ylabel('Predicted')
-    plt.show() 
+    plt.show()
 
 print(np.mean(MAE),np.mean(r2),np.mean(exp_v))
 
@@ -87,7 +87,7 @@ kPCA_MAE =[]
 kPCA_r2 =[]
 kPCA_exp =[]
 for train, test in kf_total:
-     
+
     model = kpca_svr.fit(x[train],y[train])
     # print y[test], model.predict(x[test])
     print 'MAE : ', mean_absolute_error(y[test], model.predict(x[test]))
@@ -102,6 +102,7 @@ for train, test in kf_total:
     ax.plot([y[test].min(), y[test].max()], [y[test].min(), y[test].max()], 'k--', lw=4)
     ax.set_xlabel('Measured')
     ax.set_ylabel('Predicted')
-    plt.show() 
+    plt.show()
+
 
 print(np.mean(kPCA_MAE),np.mean(kPCA_r2),np.mean(kPCA_exp))
