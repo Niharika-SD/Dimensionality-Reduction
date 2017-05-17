@@ -14,11 +14,11 @@ from sklearn.pipeline import Pipeline
 from sklearn.metrics import mean_squared_error,explained_variance_score,mean_absolute_error,r2_score,make_scorer
 from sklearn.svm import SVR
 
-os.chdir('/home/niharikashimona/Downloads/Datasets/')
+os.chdir('/home/niharika-shimona/Documents/Projects/Autism_Network/code/Datasets_Matched/')
 
-dataset = sio.loadmat('dataset_ADOSTotalScore.mat')
+dataset = sio.loadmat('SRS_data_Aut.mat')
 x= dataset['data']
-y = dataset['y']
+y = dataset['y_tot']
 y = np.ravel(y)
 print y.shape
 

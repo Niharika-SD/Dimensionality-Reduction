@@ -18,18 +18,19 @@ from sklearn.metrics import mean_squared_error,explained_variance_score,mean_abs
 from sklearn.svm import SVR
 
 
-os.chdir('/home/ndsouza4/matlab/New_files/Correlation_data/rz')
-for filename in glob.glob('*.mat'):
+os.chdir('/home/niharika-shimona/Documents/Projects/Autism_Network/code/Datasets_Matched/')
+for filename in glob.glob('S*.mat'):
     dataset = sio.loadmat(filename)
     tfilename = filename.split('.')
     sys.stdout=open(tfilename[0]+'.txt',"w")
     print filename
     x= dataset['data']
-    y = dataset['y']
-    y = np.ravel(y)
+    y = dataset['y_tot']
+    y = np.asarray(np.ravel(y), dtype = 'int32')
     
 
     kf_total = cross_validation.KFold(len(x), n_folds=10,shuffle=True, random_state=78)
+    print kf_total
     sklearn_pca = sklearnPCA()
     svr_rbf = SVR(kernel='poly',degree =3)
     pca_svr = Pipeline([('pca',sklearn_pca), ('svr', svr_rbf)])
@@ -47,13 +48,16 @@ for filename in glob.glob('*.mat'):
 
     my_scorer = make_scorer(explained_variance_score)
     lrgs = grid_search.GridSearchCV(estimator=pca_svr, param_grid=dict(pca__n_components =n_comp,svr__C = c_range), scoring =my_scorer, n_jobs=1)
+    lrgs.fit(x,y)
     print [explained_variance_score(y[test],lrgs.fit(x[train],y[train]).predict(x[test]),multioutput='variance_weighted') for train, test in kf_total]
     print [mean_absolute_error(lrgs.fit(x[train],y[train]).predict(x[test]),y[test]) for train, test in kf_total]
     print lrgs.best_score_
     print lrgs.best_estimator_
     model = lrgs.best_estimator_
+
     i =0
     for train, test in kf_total:
+        print y[train].shape
 
         sPCA_MAE.append(mean_absolute_error(y[train], model.predict(x[train])))
         sPCA_r2.append(r2_score(y[train], model.predict(x[train]), multioutput='variance_weighted'))
@@ -67,9 +71,9 @@ for filename in glob.glob('*.mat'):
         ax.set_xlabel('Predicted')
         ax.set_ylabel('Measured')
         i= i+1
-	name = tfilename[0]+'fig_'+ `i`+ '_train.png'
-	fig.savefig(name)   # save the figure to file
-	plt.close(fig)
+	   name = tfilename[0]+'fig_'+ `i`+ '_train.png'
+	   fig.savefig(name)   # save the figure to file
+	   plt.close(fig)
 
         sPCA_MAE_test.append(mean_absolute_error(y[test], model.predict(x[test])))
         sPCA_r2_test.append(r2_score(y[test], model.predict(x[test]), multioutput='variance_weighted'))
@@ -83,8 +87,8 @@ for filename in glob.glob('*.mat'):
         ax.set_xlabel('Predicted')
         ax.set_ylabel('Measured')
         name = tfilename[0]+'fig_'+ `i`+ '_test.png'
-	fig.savefig(name)   # save the figure to file
-	plt.close(fig)
+	   fig.savefig(name)   # save the figure to file
+	   plt.close(fig)
 
     print(np.mean(sPCA_MAE),np.mean(sPCA_r2),np.mean(sPCA_exp))
     print(np.mean(sPCA_MAE_test),np.mean(sPCA_r2_test),np.mean(sPCA_exp_test))
