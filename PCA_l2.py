@@ -20,19 +20,21 @@ import pandas as pd
 from SparsePCA_Pipeline import Split_class,create_dataset,evaluate_results
 
 df_aut,df_cont = Split_class()
-task  ='ADOS.Total'
+task  ='SRS.TotalRaw.Score'
 x_aut,y_aut,x_cont,y_cont = create_dataset(df_aut,df_cont,task,'/home/niharika-shimona/Documents/Projects/Autism_Network/code/patient_data')	
 	
-x= x_aut
-y= np.ravel(y_aut)
+x =np.concatenate((x_cont,x_aut),axis =0)
+y = np.ravel(np.concatenate((y_cont,y_aut),axis =0))
 
 pca =PCA()
-pca1 = PCA(n_components = 39)
+pca1 = PCA(n_components = 79)
 
-x = pca.inverse_transform(pca.fit_transform(x))- pca1.inverse_transform(pca1.fit_transform(x))
+
+
+x = pca.inverse_transform(pca.fit_transform(x))-pca1.inverse_transform(pca1.fit_transform(x)) 
 svr_poly = NuSVR(kernel ='rbf',cache_size=1000)
 
-kf_total = KFold(n_splits=10,shuffle=True, random_state=78)
+kf_total = KFold(n_splits=10,shuffle=True, random_state=3)
 
 ridge_range = np.linspace(0.01,0.09,5)
 c_range = np.logspace(0,5,5)
@@ -40,16 +42,20 @@ gamma_range = np.logspace(-4, 1, 6)
 my_scorer = make_scorer(explained_variance_score)
 p_grid = dict(C =c_range,nu=ridge_range, gamma = gamma_range)
 
+newpath = r'/home/niharika-shimona/Documents/Projects/Autism_Network/Results/PCA_l2/rank 79/'+ task 
+if not os.path.exists(newpath):
+	os.makedirs(newpath)
+os.chdir(newpath)
 
 lrgs = GridSearchCV(estimator=svr_poly, param_grid=p_grid, scoring =my_scorer, n_jobs=1)
 lrgs.fit(x,y)
+sys.stdout=open('results'+'.txt',"w")
 print [explained_variance_score(y[test],lrgs.fit(x[train],y[train]).predict(x[test]),multioutput='variance_weighted') for train, test in kf_total.split(x,y)]
 print [mean_absolute_error(lrgs.fit(x[train],y[train]).predict(x[test]),y[test]) for train, test in kf_total.split(x,y)]
 print lrgs.best_score_
 print lrgs.best_estimator_
 
-newpath = r'/home/niharika-shimona/Documents/Projects/Autism_Network/Results/PCA_l2/'+ task
-if not os.path.exists(newpath):
-	os.makedirs(newpath)
-os.chdir(newpath)
+
 evaluate_results(kf_total,x,y,lrgs.best_estimator_,-1)
+
+sys.stdout.close()
