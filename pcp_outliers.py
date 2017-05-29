@@ -22,7 +22,7 @@ import numpy as np
 from scipy.sparse.linalg import svds
 
 
-def pcp(M, delta=1e-6, mu=None, maxiter=500, verbose=False, missing_data=True,
+def pcp(M,method , delta=1.88e-5, mu=None, maxiter=500, verbose=False, missing_data=True,
         svd_method="approximate", **svd_args):
     # Check the SVD method.
     allowed_methods = ["approximate", "exact", "sparse"]
@@ -44,7 +44,7 @@ def pcp(M, delta=1e-6, mu=None, maxiter=500, verbose=False, missing_data=True,
                          "SVD will probably fail.")
 
     # Initialize the tuning parameters.
-    lam = 2.0 / np.sqrt(np.max(shape))
+    lam = 1.0 / np.sqrt(np.max(shape))
     if mu is None:
         mu = 0.25 * np.prod(shape) / np.sum(np.abs(M))
         if verbose:
@@ -70,12 +70,17 @@ def pcp(M, delta=1e-6, mu=None, maxiter=500, verbose=False, missing_data=True,
         L = np.dot(u, np.dot(np.diag(s), v))
 
         # Shrinkage step.
-        S = shrink(M - L + Y / mu, lam / mu)
-
+        if method == 'gross_errors':
+            S = shrink(M - L + Y / mu, lam / mu)
+        else:
+            S= M - L + Y / mu
+            s_dash = np.diag(np.asarray(np.sqrt(np.sum(S*S, axis=0))))
+            S = (S.dot(shrink(s_dash,lam/mu))).dot(np.linalg.pinv(s_dash))
         # Lagrange step.
         step = M - L - S
         step[missing] = 0.0
         Y += mu * step
+
         # Check for convergence.
         err = np.sqrt(np.sum(step ** 2) / norm)
         if verbose:
